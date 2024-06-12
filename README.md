@@ -84,3 +84,19 @@ This project goal is to simplify the management of CapsOs user licenses on Alma 
     - `sql/` : contains the sql files
     - `src/` : contains the source code
     - `save/` : contains the c files, py files, sh files, sql files after using make save
+
+### To protect a folder of Apache server based on the database information
+
+#### To protect a folder of your Apache server you need to
+
+    - Create a folder secure in /var/www/html/secure
+
+    - Copy the content of /capsos_lic/mgt/httpd.conf in /etc/httpd/conf/httpd.conf
+
+        - the secure access will be only accessible by a valid user with an active license
+    
+    - You will need to create an SSL certificate and replace with the right path those lines :
+
+        - SSLCertificateFile /var/www/html/certificate/cert.pem
+        
+        - SSLCertificateKeyFile /var/www/html/certificate/key.pem
