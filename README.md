@@ -29,7 +29,7 @@ This project goal is to simplify the management of CapsOs user licenses on Alma 
 
 - Python3 installed on the server :
 
-    **INstall Python 3**
+    **Install Python 3**
     ```sh
     sudo dnf install python3
     ```
@@ -38,7 +38,7 @@ This project goal is to simplify the management of CapsOs user licenses on Alma 
 
 - Go to the `capsos_lic_mgt` folder
 
-- Launched the `firstRun.sh` script
+- Launch the `firstRun.sh` script
     ```sh
     ./firstRun.sh
     ```
@@ -47,7 +47,7 @@ This project goal is to simplify the management of CapsOs user licenses on Alma 
     - Add a granted user to access the database
     - Create the database
     - Make the executables in the `bin` folder
-    - Set up the licence expiracy cron job
+    - Set up the licence expiry cron job
 
 ### How to use it
 
@@ -60,14 +60,14 @@ This project goal is to simplify the management of CapsOs user licenses on Alma 
     ```sh
     ./addUser.exe <user> <password> <licenseExpiracyDate>
     ```
-    Password will be using the bcrypt hashing method
+    The password will be using the bcrypt hashing method
 
-- To modify the expiracy date of a user license
+- To modify the expiry date of a user license
     ```sh
     ./modifyUser.exe <user> <licenseExpiracyDate>
     ```
 
-- To update license's status (it will be done automatically everyday at midnight)
+- To update license's status (it will be done automatically every day at midnight)
     ```sh 
     ./updateDatabase.exe
     ```
