@@ -4,12 +4,28 @@
 #include <mysql/mysql.h>
 #include <time.h>
 
+/**
+ * @brief Prints an error message and exits the program.
+ * @author Tanguy Soutric
+ * 
+ * @param conn The MySQL connection.
+ */
 void exit_error(MYSQL *conn) {
     fprintf(stderr, "Error: %s\n", mysql_error(conn));
     mysql_close(conn);
     exit(1);
 }
 
+/**
+ * @brief Checks user groups based on contract end dates and updates their status.
+ * @author Tanguy Soutric
+ * 
+ * This function queries the users table to get usernames and their contract end dates.
+ * It updates the user groups to "licenseExpired" or "licenseActive" based on the comparison
+ * between the contract end date and the current date.
+ * 
+ * @param conn The MySQL connection.
+ */
 void check_user_groups(MYSQL *conn) {
     char query[1024];
     if (mysql_query(conn, "SELECT username, dateFinContrat FROM users")) {
@@ -41,13 +57,19 @@ void check_user_groups(MYSQL *conn) {
     printf("User groups updated successfully.\n");
 }
 
+/**
+ * @brief The main entry point of the program.
+ * @author Tanguy Soutric
+ * 
+ * @return int The exit status of the program.
+ */
 int main() {
     MYSQL *conn = mysql_init(NULL);
     if (conn == NULL) {
         fprintf(stderr, "mysql_init() failed\n");
         exit(1);
     }
-    if (mysql_real_connect(conn, "localhost", "root", "Capsule2024!", "capsAuthentification", 0, NULL, 0) == NULL) {
+    if (mysql_real_connect(conn, "localhost", "capsule", "Capsule2024!", "capsAuthentification", 0, NULL, 0) == NULL) {
         exit_error(conn);
     }
     check_user_groups(conn);
