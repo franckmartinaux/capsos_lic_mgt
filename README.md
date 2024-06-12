@@ -36,6 +36,8 @@ This project goal is to simplify the management of CapsOs user licenses on Alma 
 
 ### First use
 
+- You need to be logged with a sudoer user
+
 - Go to the `capsos_lic_mgt` folder
 
 - Launch the `firstRun.sh` script
