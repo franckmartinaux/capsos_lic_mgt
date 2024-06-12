@@ -76,7 +76,7 @@ This project goal is to simplify the management of CapsOs user licenses on Alma 
 
 ### Project structure
 
-    **Description of the project structure**
+#### Description of the project structure
 
     - `bin/` : contains the executable files
     - `doc/` : contains the doxygen documentation after using make doc
