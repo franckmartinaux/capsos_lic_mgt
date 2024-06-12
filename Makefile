@@ -1,23 +1,20 @@
 srcdir = ./src
-cdir = $(srcdir)/c
 bindir = ./bin
 docdir = ./doc
 savedir = ./save
-pythondir = $(srcdir)/python
 sqldir = ./sql
 scriptdir = ./script
 
 CC = gcc
-CPSAVE = cp $(SRC) $(HEAD) $(PYTHON) $(SQL) $(SCRIPT) $(savedir)/ 
+CPSAVE = cp $(SRC) $(HEAD) $(SQL) $(SCRIPT) $(savedir)/ 
 CPRESTORE = cp $(wildcard $(savedir)/*) $(srcdir)/
 RM = -rm -rf $(bindir) $(docdir)
 CFLAGS = -Wall -g
-LDFLAGS = -L/usr/lib64/mysql -lm -lmysqlclient
+LDFLAGS = -L/usr/lib64/mysql -lm -lmysqlclient -lcrypt
 README = README.md
-SRC = $(wildcard $(cdir)/*.c)
-HEAD = $(wildcard $(cdir)/*.h)
-PROGS = $(patsubst $(cdir)/%.c, $(bindir)/%, $(SRC))
-PYTHON = $(wildcard $(pythondir)/*.py)
+SRC = $(wildcard $(srcdir)/*.c)
+HEAD = $(wildcard $(srcdir)/*.h)
+PROGS = $(patsubst $(srcdir)/%.c, $(bindir)/%, $(SRC))
 SQL = $(wildcard $(sqldir)/*.sql)
 SCRIPT = $(wildcard $(scriptdir)/*.sh)
 ARCHIVE_NAME = capsAuthentification
@@ -27,9 +24,7 @@ DOC_NAME = capsAuthentification
 
 all: $(PROGS)
 
-force_rebuild: $(PROGS)
-
-$(bindir)/%: $(cdir)/%.c $(HEAD)
+$(bindir)/%: $(srcdir)/%.c $(HEAD)
 	@echo "Création de l'exécutable $@.exe"
 	@mkdir -p $(bindir) # Crée le répertoire bindir s'il n'existe pas
 	@$(CC) $(CFLAGS) $^ -o $@.exe $(LDFLAGS)
@@ -38,7 +33,7 @@ clean:
 	@echo "Suppression des exécutables $(PROGS) et de la doc associée"
 	@$(RM)
 
-save: $(SRC) $(HEAD) $(PYTHON) $(SQL) $(SCRIPT)
+save: $(SRC) $(HEAD) $(SQL) $(SCRIPT)
 	@echo "Création d'une sauvegarde"
 	@mkdir -p $(savedir)/ # Crée un répertoire savedir s'il n'existe pas
 	@$(CPSAVE)
@@ -69,15 +64,26 @@ doc: generate_config
 	@doxygen $(docdir)/Doxyfile > /dev/null 2>&1 #permet de ne pas afficher la sortie standard
 
 give:
-	@echo "Création de l'archive $(ARCHIVE_NAME).tar.gz"
-	@mkdir -p $(ARCHIVE_NAME)/$(cdir) # Crée un répertoire nom_prenom s'il n'existe pas
-	@cp -r $(cdir)/* $(ARCHIVE_NAME)/$(cdir) # Copie les fichiers sources dans le répertoire
-	@mkdir -p $(ARCHIVE_NAME)/$(pythondir)
-	@cp -r $(pythondir)/* $(ARCHIVE_NAME)/$(pythondir)
+	@echo "Creation of the archive $(ARCHIVE_NAME).tar.gz"
+	@mkdir -p $(ARCHIVE_NAME)/$(srcdir)
+	@cp -r $(srcdir)/* $(ARCHIVE_NAME)/$(srcdir)
 	@mkdir -p $(ARCHIVE_NAME)/$(sqldir)
 	@cp -r $(sqldir)/* $(ARCHIVE_NAME)/$(sqldir)
 	@mkdir -p $(ARCHIVE_NAME)/$(scriptdir)
 	@cp -r $(scriptdir)/* $(ARCHIVE_NAME)/$(scriptdir)
-	@cp $(README) Makefile $(ARCHIVE_NAME)
-	@-tar czf $(ARCHIVE_NAME).tar.gz $(ARCHIVE_NAME) # Crée l'archive
+	@cp $(README) Makefile ./httpd.conf $(ARCHIVE_NAME)
+	@-tar czf $(ARCHIVE_NAME).tar.gz $(ARCHIVE_NAME)
 	@rm -rf $(ARCHIVE_NAME)
+
+firstRun:
+	@echo "Starting MySQL service"
+	@sudo systemctl start mysqld
+	@echo "MySQL will ask for your root password"
+	@echo "Adding user capsule to the database with the granted privileges needed"
+	@mysql -u root -p -e "source $(sqldir)/addUser.sql" > /dev/null 2>&1
+	@echo "Setting up the database tables for the capsule user"
+	@mysql -u capsule -p'Capsule2024!' -e "source $(sqldir)/capsAuthentification.sql" > /dev/null 2>&1
+	@echo "Executing Makefile commands"
+	@make | awk 'NR>1 {if (p) print p; p=$$0}'
+	@echo "Setting up the license expiry cron job"
+	@./$(scriptdir)/updateLicenceExpiracy.sh

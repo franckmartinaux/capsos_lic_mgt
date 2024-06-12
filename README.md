@@ -27,22 +27,15 @@ This project goal is to simplify the management of CapsOs user licenses on Alma 
     sudo dnf install mysql-server
     ```
 
-- Python3 installed on the server :
-
-    **Install Python 3**
-    ```sh
-    sudo dnf install python3
-    ```
-
 ### First use
 
 - You need to be logged with a sudoer user
 
 - Go to the `capsos_lic_mgt` folder
 
-- Launch the `firstRun.sh` script
+- Use firstRun target of the Makefile
     ```sh
-    ./firstRun.sh
+    make firstRun
     ```
 
     - It will start the MySQL service
@@ -83,7 +76,7 @@ This project goal is to simplify the management of CapsOs user licenses on Alma 
     - `script/` : contains the script files
     - `sql/` : contains the sql files
     - `src/` : contains the source code
-    - `save/` : contains the c files, py files, sh files, sql files after using make save
+    - `save/` : contains the c files, sh files, sql files after using make save
 
 ### To protect a folder of Apache server based on the database information
 

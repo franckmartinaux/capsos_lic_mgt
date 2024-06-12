@@ -18,11 +18,12 @@
  * @author Tanguy Soutric
  * 
  * @param conn The MySQL connection.
+ * @return int The return code of the program.
  */
-void exit_error(MYSQL *conn) {
+int exit_error(MYSQL *conn) {
     fprintf(stderr, "Error: %s\n", mysql_error(conn));
     mysql_close(conn);
-    exit(1);
+    return -1;
 }
 
 /**
@@ -35,13 +36,14 @@ void exit_error(MYSQL *conn) {
  * @param conn The MySQL connection.
  * @param username The username.
  * @param new_date The new contract end date.
+ * @return int The return code of the program.
  */
-void modify_user(MYSQL *conn, const char *username, const char *new_date) {
+int modify_user(MYSQL *conn, const char *username, const char *new_date) {
     char query[1024];
 
     snprintf(query, sizeof(query), "SELECT COUNT(*) FROM users WHERE username = '%s'", username);
     if (mysql_query(conn, query)) {
-        exit_error(conn);
+        return exit_error(conn);
     }
 
     MYSQL_RES *result = mysql_store_result(conn);
@@ -50,13 +52,13 @@ void modify_user(MYSQL *conn, const char *username, const char *new_date) {
     mysql_free_result(result);
 
     if (!user_exists) {
-        printf("User %s does not exist in the database.\n", username);
-        return;
+        fprintf(stderr,"User %s does not exist in the database.\n", username);
+        return 1;
     }
 
     snprintf(query, sizeof(query), "UPDATE users SET dateFinContrat = '%s' WHERE username = '%s'", new_date, username);
     if (mysql_query(conn, query)) {
-        exit_error(conn);
+        return exit_error(conn);
     }
 
     time_t now;
@@ -68,10 +70,11 @@ void modify_user(MYSQL *conn, const char *username, const char *new_date) {
     
     snprintf(query, sizeof(query), "UPDATE usergroups SET groupname = '%s' WHERE username = '%s'", groupname, username);
     if (mysql_query(conn, query)) {
-        exit_error(conn);
+        return exit_error(conn);
     }
 
-    printf("%s updated with new contract end date %s and group %s.\n", username, new_date, groupname);
+    fprintf(stdout,"%s updated with new contract end date %s and group %s.\n", username, new_date, groupname);
+    return 0;
 }
 
 /**
@@ -85,7 +88,7 @@ void modify_user(MYSQL *conn, const char *username, const char *new_date) {
 int main(int argc, char *argv[]) {
     if (argc != 3) {
         printf("Usage: %s <username> <new_date_fin_contrat>\n", argv[0]);
-        exit(1);
+        return 1;
     }
 
     const char *username = argv[1];
@@ -94,11 +97,11 @@ int main(int argc, char *argv[]) {
     MYSQL *conn = mysql_init(NULL);
     if (conn == NULL) {
         fprintf(stderr, "mysql_init() failed\n");
-        exit(1);
+        return -1;
     }
 
     if (mysql_real_connect(conn, "localhost", "capsule", "Capsule2024!", "capsAuthentification", 0, NULL, 0) == NULL) {
-        exit_error(conn);
+        return exit_error(conn);
     }
 
     modify_user(conn, username, new_date);
