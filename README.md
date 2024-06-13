@@ -67,6 +67,12 @@ This project goal is to simplify the management of CapsOs user licenses on Alma 
     ./updateDatabase.exe
     ```
 
+- To add user into the database from a csv file :
+    - Csv seperator need to be a ',' and meet the following column : "LicenseId", "Password", "Customer", "End User", "Project", "Region", "Date of Purchase", "End of Support", "Invoice Number". Please use date like MM/DD/YYYY.
+    ```sh
+    ./customerIntoDb.exe <csv_file_path>
+    ```
+
 ### Project structure
 
 #### Description of the project structure

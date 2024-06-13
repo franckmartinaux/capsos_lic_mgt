@@ -2,9 +2,9 @@
  * @file addUser.c
  * @brief Program to insert users into a MySQL database.
  * 
- * This program takes a username, a password, and a contract end date as arguments,
- * hashes the password using bcrypt, and inserts the user into the MySQL database.
- * If the user already exists, a notification is displayed. 
+ * This program takes a username, a password, customer, end user, project, region, date of purchase,
+ * contract end date, and invoice number as arguments, hashes the password using bcrypt, and inserts 
+ * the user into the MySQL database. If the user already exists, a notification is displayed. 
  * Based on the contract end date, the user is placed in either an active or expired license group.
  */
 
@@ -36,11 +36,17 @@ int exit_error(MYSQL *conn) {
  * @param conn The MySQL connection.
  * @param username The username.
  * @param hashed_password The hashed password.
+ * @param customer The customer.
+ * @param endUser The end user.
+ * @param project The project.
+ * @param region The region.
+ * @param dateOfPurchase The date of purchase.
  * @param contract_end_date The contract end date.
+ * @param invoiceNumber The invoice number.
  * @return int The return code of the program.
  */
-int insert_user(MYSQL *conn, const char *username, const char *hashed_password, const char *contract_end_date) {
-    char query[1024];
+int insert_user(MYSQL *conn, const char *username, const char *hashed_password, const char *customer, const char *endUser, const char *project, const char *region, const char *dateOfPurchase, const char *contract_end_date, const char *invoiceNumber) {
+    char query[2048];
     MYSQL_RES *res;
     MYSQL_ROW row;
     srand(time(NULL));
@@ -60,10 +66,11 @@ int insert_user(MYSQL *conn, const char *username, const char *hashed_password, 
         return 1;
     }
 
-    snprintf(query, sizeof(query), "INSERT INTO users (username, pw, dateFinContrat) VALUES ('%s', '%s', '%s')", username, hashed_password, contract_end_date);
+    snprintf(query, sizeof(query), "INSERT INTO users (username, pw, customer, endUser, project, region, dateOfPurchase, dateEndSupport, invoiceNumber) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')", username, hashed_password, customer, endUser, project, region, dateOfPurchase, contract_end_date, invoiceNumber);
     if (mysql_query(conn, query)) {
         return exit_error(conn);
     }
+
     time_t now;
     time(&now);
     struct tm *local = localtime(&now);
@@ -74,7 +81,6 @@ int insert_user(MYSQL *conn, const char *username, const char *hashed_password, 
     snprintf(query, sizeof(query), "INSERT INTO usergroups (username, groupname) VALUES ('%s', '%s')", username, groupname);
     if (mysql_query(conn, query)) {
         return exit_error(conn);
-        return -1;
     }
 
     printf("%s inserted with hashed password and contract end date %s.\n", username, contract_end_date);
@@ -89,14 +95,20 @@ int insert_user(MYSQL *conn, const char *username, const char *hashed_password, 
  * @return int The return code of the program.
  */
 int main(int argc, char *argv[]) {
-    if (argc != 4) {
-        printf("Usage: %s <username> <password> <contract_end_date>\n", argv[0]);
+    if (argc != 10) {
+        printf("Usage: %s <username> <password> <customer> <endUser> <project> <region> <dateOfPurchase> <contract_end_date> <invoiceNumber>\n", argv[0]);
         return 1;
     }
 
     const char *username = argv[1];
     const char *password = argv[2];
-    const char *contract_end_date = argv[3];
+    const char *customer = argv[3];
+    const char *endUser = argv[4];
+    const char *project = argv[5];
+    const char *region = argv[6];
+    const char *dateOfPurchase = argv[7];
+    const char *contract_end_date = argv[8];
+    const char *invoiceNumber = argv[9];
 
     char salt[30] = "$2b$12$";
     const char *salt_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./";
@@ -118,10 +130,10 @@ int main(int argc, char *argv[]) {
     }
 
     if (mysql_real_connect(conn, "localhost", "capsule", "Capsule2024!", "capsAuthentification", 0, NULL, 0) == NULL) {
-        return -1;
+        return exit_error(conn);
     }
 
-    insert_user(conn, username, hashed_password, contract_end_date);
+    insert_user(conn, username, hashed_password, customer, endUser, project, region, dateOfPurchase, contract_end_date, invoiceNumber);
     mysql_close(conn);
 
     return 0;

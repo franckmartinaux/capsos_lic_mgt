@@ -56,7 +56,7 @@ int modify_user(MYSQL *conn, const char *username, const char *new_date) {
         return 1;
     }
 
-    snprintf(query, sizeof(query), "UPDATE users SET dateFinContrat = '%s' WHERE username = '%s'", new_date, username);
+    snprintf(query, sizeof(query), "UPDATE users SET dateEndSupport = '%s' WHERE username = '%s'", new_date, username);
     if (mysql_query(conn, query)) {
         return exit_error(conn);
     }

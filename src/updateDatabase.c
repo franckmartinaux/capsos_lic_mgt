@@ -30,7 +30,7 @@ int exit_error(MYSQL *conn) {
  */
 int check_user_groups(MYSQL *conn) {
     char query[1024];
-    if (mysql_query(conn, "SELECT username, dateFinContrat FROM users")) {
+    if (mysql_query(conn, "SELECT username, dateEndSupport FROM users")) {
         return exit_error(conn);
     }
     MYSQL_RES *result = mysql_store_result(conn);
