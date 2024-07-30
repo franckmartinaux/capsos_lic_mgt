@@ -6,6 +6,44 @@
 #include <string.h>
 #include <ctype.h>
 
+int parseDate(const char* dateString, char* outputDate) {
+    struct tm timeStruct = {0};
+
+    // List of possible date formats
+    const char* formats[] = {
+        "%m/%d/%Y",   // MM/DD/YYYY
+        "%m/%d/%y",   // MM/DD/YY
+        "%m-%d-%Y",   // MM-DD-YYYY
+        "%m-%d-%y"    // MM-DD-YY
+    };
+
+    // Check if dateString is empty
+    if (strlen(dateString) == 0 || strcmp(dateString, "None") == 0) {
+        strcpy(outputDate, "0000-01-01");
+        return 0;
+    }
+
+    for (int i = 0; i < sizeof(formats) / sizeof(formats[0]); i++) {
+        if (strptime(dateString, formats[i], &timeStruct) != NULL) {
+            // Convert to YYYY-MM-DD format
+            strftime(outputDate, 11, "%Y-%m-%d", &timeStruct);
+            return 0;
+        }
+    }
+
+    // If all parsing attempts fail, return an error
+    return -1;
+}
+
+// Remove quotes from a string
+void trimQuotes(char* str) {
+    size_t len = strlen(str);
+    if (len > 0 && str[0] == '\"' && str[len - 1] == '\"') {
+        str[len - 1] = '\0';
+        memmove(str, str + 1, len - 2);
+    }
+}
+
 int userIntoDb(const char *filePath) {
     FILE *file = fopen(filePath, "r");
     if (file == NULL) {
@@ -28,6 +66,7 @@ int userIntoDb(const char *filePath) {
 
     while (fgets(buffer, sizeof(buffer), file)) {
 
+        // Initialize all fields to a default value
         strcpy(username, "NA");
         strcpy(password, "NA");
         strcpy(customer, "NA");
@@ -42,6 +81,7 @@ int userIntoDb(const char *filePath) {
         char *fields[] = {username, password, customer, endUser, project, region, dateOfPurchase, dateEndSupport, invoiceNumber};
         int fieldIndex = 0;
 
+        // Parse each field separated by commas
         while (*currentChar != '\0' && fieldIndex < 9) {
             char *start = currentChar;
             while (*currentChar != ',' && *currentChar != '\n' && *currentChar != '\0') {
@@ -51,6 +91,7 @@ int userIntoDb(const char *filePath) {
             if (currentChar - start > 0) {
                 strncpy(fields[fieldIndex], start, currentChar - start);
                 fields[fieldIndex][currentChar - start] = '\0';
+                trimQuotes(fields[fieldIndex]);
             }
 
             if (*currentChar == ',') {
@@ -59,30 +100,26 @@ int userIntoDb(const char *filePath) {
             fieldIndex++;
         }
 
-        if (strcmp(username, "NA") == 0 || strcmp(password, "NA") == 0) {
+        // Check if username and password are empty
+        if (strcmp(username, "NA") == 0 || strcmp(password, "NA") == 0 || strlen(username) == 0 || strlen(password) == 0) {
             printf("Le nom d'utilisateur et le mot de passe ne peuvent pas être vides.\n");
             continue;
-        } else {
-            if (strcmp(customer, "None") == 0) {
-                strcpy(dateOfPurchase, "0000-01-01");
-            } else if (strcmp(dateOfPurchase, "0000-01-01") != 0) {
-                struct tm purchaseTime = {0};
-                strptime(dateOfPurchase, "%m/%d/%Y", &purchaseTime);
-                strftime(dateOfPurchase, sizeof(dateOfPurchase), "%Y-%m-%d", &purchaseTime);
-            }
-            if (strcmp(dateEndSupport, "None") == 0) {
-                strcpy(dateEndSupport, "0000-01-01");
-            } else if (strcmp(dateEndSupport, "0000-01-01") != 0) {
-                struct tm endSupportTime = {0};
-                strptime(dateEndSupport, "%m/%d/%Y", &endSupportTime);
-                strftime(dateEndSupport, sizeof(dateEndSupport), "%Y-%m-%d", &endSupportTime);
-            }
-
-            char command[1000];
-            snprintf(command, sizeof(command), "../bin/addUser.exe '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s'",
-                     username, password, customer, endUser, project, region, dateOfPurchase, dateEndSupport, invoiceNumber);
-            system(command);
         }
+
+        // Parse dates using parseDate function
+        if (parseDate(dateOfPurchase, dateOfPurchase) != 0) {
+            printf("Échec de la conversion de la date de purchase pour \"%s\". Valeur de date: \"%s\"\n", username, dateOfPurchase);
+        }
+
+        if (parseDate(dateEndSupport, dateEndSupport) != 0) {
+            printf("Échec de la conversion de la date de support pour \"%s\". Valeur de date: \"%s\"\n", username, dateEndSupport);
+        }
+
+        // Construct the command
+        char command[1000];
+        snprintf(command, sizeof(command), "../bin/addUser.exe '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s' '%s'",
+                 username, password, customer, endUser, project, region, dateOfPurchase, dateEndSupport, invoiceNumber);
+        system(command);
     }
 
     fclose(file);
